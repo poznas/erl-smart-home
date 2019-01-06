@@ -9,7 +9,7 @@
 serverAddress() -> {127,0,0,1}.
 serverPort() -> 5000.
 id() -> alarm.
-name() -> dom_alarm.
+name() -> alarm.
 
 %%-------------------------
 %% Funckja start
@@ -20,11 +20,8 @@ name() -> dom_alarm.
 start() ->
     try
         io:format("Uruchamiam czujnik alarmu o Id: ~p...~n", [id()]),
-        PId = spawn(fun () -> loop() end),
-        ets:new(dom_pids, [set, named_table]),
-        ets:insert(dom_pids, {loop, PId}),
         dom_client:register(serverAddress(), serverPort(), id(), name(), 0),
-        start
+        loop()
     catch
         _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
         blad

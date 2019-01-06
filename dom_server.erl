@@ -17,18 +17,18 @@ port() -> 5000.
 start() ->
     try
         ets:new(dom_pids, [set, named_table]),
-        PID = spawn(fun () -> read(port()) end),
-        ets:insert(dom_pids, {read, port(), PID}),
-        ets:new(dom_clients, [set, public, named_table]),
-        ets:new(dom_data, [set, public,  named_table]),
-        ets:new(dom_func, [bag, public,  named_table]),
+        ets:insert(dom_pids, {read, port(), self()}),
+
+        ets:new(dom_clients, [set, named_table, public]),
+        ets:new(dom_data, [set, named_table, public]),
+        ets:new(dom_func, [bag, named_table, public]),
         io:format("Uruchamiam serwer na porcie ~p...~n", [port()]),
 
         add_func(temp, fun dom_func:temp/1), 
         add_func(dym, fun dom_func:dym/1), 
         add_func(alarm, fun dom_func:alarm/1), 
 
-        start
+        read(port())
     catch
         _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden serwer!~n", []),
         error
@@ -80,6 +80,7 @@ read(Port) ->
 %% Argumenty: Adres klienta, krotka z danymi.
 %%------------------------------------------------------------------------------
 act(ClientAddress, {register, Id, Name, ClientPort}) ->
+    io:format("register o id ~p.~n", [Id]),
     ets:insert(dom_clients, {Id, Name, ClientAddress, ClientPort}),
     io:format("Rejestruje klienta o id ~p i nazwie ~p.~n", [Id, Name]);
 act(_, {data, Id, Data}) ->

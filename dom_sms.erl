@@ -6,10 +6,12 @@
 %%% funkcje: start, stop, loop
 %%%-------------------
 
+port() -> 8084.
+
 serverAddress() -> {127,0,0,1}.
-serverPort() -> 8084.
-id() -> alarm.
-name() -> dom_alarm.
+serverPort() -> 5000.
+id() -> sms.
+name() -> sms.
 
 %%-------------------------
 %% Funckja start
@@ -20,11 +22,8 @@ name() -> dom_alarm.
 start() ->
     try
         io:format("Uruchamiam kontroler sms o id: ~p...~n", [id()]),
-        PID = spawn(fun () -> loop() end),
-        ets:new(dom_pids, [set, named_table]),
-        ets:insert(dom_pids, {loop, PID}),
-        dom_client:register(serverAddress(), serverPort(), id(), name(), serverPort()),
-        start
+        dom_client:register(serverAddress(), serverPort(), id(), name(), port()),
+        loop()
     catch
         _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
         blad
@@ -54,7 +53,7 @@ stop() ->
 %%-------------------------
 
 loop() ->
-    case dom_net:read(serverPort()) of
+    case dom_net:read(port()) of
         {_, _, Tresc} ->
             io:format("Wysylam sms: ~p ~n", [Tresc]);
         _ ->
