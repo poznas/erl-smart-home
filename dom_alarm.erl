@@ -1,10 +1,15 @@
 -module(dom_alarm).
--export([start/4, stop/3, loop/3]).
+-export([start/0, stop/0, loop/0]).
 
 %%%-------------------
 %%% dom_alarm symuluje zachowanie czujnika alarmu.
 %%% funkcje: start, stop, loop
 %%%-------------------
+
+serverAddress() -> {127,0,0,1}.
+serverPort() -> 5000.
+id() -> alarm.
+name() -> dom_alarm.
 
 %%-------------------------
 %% Funckja start
@@ -12,13 +17,13 @@
 %% uruchamia czujnik alarmu danym porcie.
 %%-------------------------
 
-start(ServerAddress, ServerPort, Id, Name) ->
+start() ->
     try
-        io:format("Uruchamiam czujnik alarmu o id: ~p...~n", [Id]),
-        PID = spawn(dom_alarm, loop, [ServerAddress, ServerPort, Id]),
+        io:format("Uruchamiam czujnik alarmu o Id: ~p...~n", [id()]),
+        PId = spawn(fun () -> loop() end),
         ets:new(dom_pids, [set, named_table]),
-        ets:insert(dom_pids, {loop, PID}),
-        dom_client:register(ServerAddress, ServerPort, Id, Name, 0),
+        ets:insert(dom_pids, {loop, PId}),
+        dom_client:register(serverAddress(), serverPort(), id(), name(), 0),
         start
     catch
         _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
@@ -30,13 +35,13 @@ start(ServerAddress, ServerPort, Id, Name) ->
 %% Zatrzymuje działanie czujnika alarmu.
 %%-------------------------
 
-stop(ServerAddress, ServerPort, Id) ->
+stop() ->
     try
-        dom_client:delete(ServerAddress, ServerPort, Id),
-        PID = element(2, hd(ets:lookup(dom_pids, loop))),
-        exit(PID, stop),
+        dom_client:delete(serverAddress(), serverPort(), id()),
+        PId = element(2, hd(ets:lookup(dom_pids, loop))),
+        exit(PId, stop),
         ets:delete(dom_pids),
-        io:format("Zatrzymuje czujnik alarmu o ID ~p...~n", [Id]),
+        io:format("Zatrzymuje czujnik alarmu o Id ~p...~n", [id()]),
         stop
     catch
         _:_ -> io:format("Brak dzialajacego czujnika na tym procesie!~n"),
@@ -48,12 +53,12 @@ stop(ServerAddress, ServerPort, Id) ->
 %% Wysyła co 10 sekund do serwera informacje, czy doszło do włamania.
 %%-------------------------
 
-loop(ServerAddress, ServerPort, Id) ->
+loop() ->
     case random:uniform(1) of
         1 ->
-            dom_client:data(ServerAddress, ServerPort, Id, tak);
+            dom_client:data(serverAddress(), serverPort(), id(), tak);
         _ ->
-        dom_client:data(ServerAddress, ServerPort, Id, nie)
+        dom_client:data(serverAddress(), serverPort(), id(), nie)
     end,
     timer:sleep(timer:seconds(10)),
-    loop(ServerAddress, ServerPort, Id).
+    loop().

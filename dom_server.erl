@@ -1,10 +1,12 @@
 -module(dom_server).
--export([start/1, stop/1, add_func/2, send_to/2]).
+-export([start/0, stop/0, add_func/2, send_to/2]).
 %%%-----------------------------------------------------------------------------
 %%% Glowny serwer aplikacji.
 %%% Zajmuje sie wymiana danych pomiedzy klientami oraz wykonywaniem odpowiednich
 %%% funkcji w zaleznosci od otrzymanych danych.
 %%%-----------------------------------------------------------------------------
+
+port() -> 5000.
 
 %%------------------------------------------------------------------------------
 %% Funkcja: start/1
@@ -12,19 +14,19 @@
 %%     danych. Jesli podany port jest juz zajety to zwracany jest natychmiast blad.
 %% Argumenty: Port - numer portu.
 %%------------------------------------------------------------------------------
-start(Port) ->
+start() ->
     try
         ets:new(dom_pids, [set, named_table]),
-        PID = spawn(dom_server, read, [Port]),
-        ets:insert(dom_pids, {read, Port, PID}),
+        PID = spawn(fun () -> read(port()) end),
+        ets:insert(dom_pids, {read, port(), PID}),
         ets:new(dom_clients, [set, public, named_table]),
         ets:new(dom_data, [set, public,  named_table]),
         ets:new(dom_func, [bag, public,  named_table]),
-        io:format("Uruchamiam serwer na porcie ~p...~n", [Port]),
+        io:format("Uruchamiam serwer na porcie ~p...~n", [port()]),
 
-        add_func(temp, fun dom_func:temp/1),
-        add_func(dym, fun dom_func:dym/1),
-        add_func(alarm, fun dom_func:alarm/1),
+        add_func(temp, fun dom_func:temp/1), 
+        add_func(dym, fun dom_func:dym/1), 
+        add_func(alarm, fun dom_func:alarm/1), 
 
         start
     catch
@@ -38,11 +40,11 @@ start(Port) ->
 %%     danych. Jesli nie istnieje serwer na podanym porcie to zwracany jest natychmiast blad.
 %% Argumenty: Port - numer portu.
 %%------------------------------------------------------------------------------
-stop(Port) ->
+stop() ->
     try
-        PID = hd(hd(ets:match(dom_pids, {read, Port, '$1'}))),
+        PID = hd(hd(ets:match(dom_pids, {read, port(), '$1'}))),
         exit(PID, stop),
-        ets:match_delete(dom_pids, {read, Port, '_'}),
+        ets:match_delete(dom_pids, {read, port(), '_'}),
         ets:delete(dom_pids),
         ets:delete(dom_clients),
         ets:delete(dom_data),
@@ -50,7 +52,7 @@ stop(Port) ->
         io:format("Zatrzymano serwer!~n"),
         stop
     catch
-        _:_ -> io:format("Brak dzialajacego serwera na porcie ~p!~n", [Port]),
+        _:_ -> io:format("Brak dzialajacego serwera na porcie ~p!~n", [port()]),
         error
     end.
 
@@ -61,15 +63,15 @@ stop(Port) ->
 %% Argumenty: Port - numer portu.
 %%------------------------------------------------------------------------------
 read(Port) ->
+    io:format("listen to ~p~n", [Port]),
     case dom_net:read(Port) of
         {error, _} ->
-            io:format("Port ~p jest juz zajety przez inny proces!~n", [Port]),
-            stop(Port);
+            stop();
         {ClientAddress, _, Data} ->
-            spawn(dom_server, act, [ClientAddress, Data]),
+            spawn(fun () -> act(ClientAddress, Data) end),
             read(Port);
         _ ->
-            stop(Port)
+            stop()
     end.
 
 %%------------------------------------------------------------------------------

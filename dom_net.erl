@@ -33,7 +33,7 @@ read(Port, Timeout) ->
 %%     jesli wystapil blad lub nie odebrano danych.
 %%------------------------------------------------------------------------------
 read(Port) ->
-    read(Port, 1000).
+    read(Port, 100000).
 
 %%------------------------------------------------------------------------------
 %% Function: recv/2
@@ -47,7 +47,7 @@ recv(Socket, Timeout) ->
         {ok, {Address, Port, Packet}} ->
             Return = {Address, Port, binary_to_term(Packet)};
         {error, Reason} ->
-            io:format("Błąd: ~p~n", [Reason]),
+            io:format("Error while listening to ~p: ~p~n", [Socket, Reason]),
             Return = {error, Reason}
     end,
     gen_tcp:close(Socket),
