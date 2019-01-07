@@ -7,7 +7,6 @@
 %%%-------------------
 
 id() -> alarm.
-name() -> alarm.
 
 %%-------------------------
 %% Funckja start
@@ -18,7 +17,7 @@ name() -> alarm.
 start() ->
     try
         io:format("Uruchamiam czujnik alarmu o Id: ~p...~n", [id()]),
-        dom_client:register(controller:address(), controller:port(), id(), name(), 0),
+        dom_client:register(controller:address(), controller:port(), id(), 0),
         loop()
     catch
         _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),

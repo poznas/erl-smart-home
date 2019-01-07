@@ -10,8 +10,8 @@
 %%     rejestrowany z podanym ID, nazwa i portem odbiorczym.
 %% Argumenty: Adres i port serwera, ID, nazwa i port odbiorczy klienta.
 %%------------------------------------------------------------------------------
-register(ServerAddress, ServerPort, Id, Name, ClientPort) -> 
-    send(ServerAddress, ServerPort, Id, {register, Id, Name, ClientPort}).
+register(ServerAddress, ServerPort, Id, ClientPort) -> 
+    send(ServerAddress, ServerPort, Id, {register, Id, ClientPort}).
 
 %%------------------------------------------------------------------------------
 %% Funkcja: data/4

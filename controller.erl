@@ -80,10 +80,10 @@ read(Port) ->
 %% Cel: Reaguje na otrzymane dane w zaleznosci od ich formatu.
 %% Argumenty: Adres klienta, krotka z danymi.
 %%------------------------------------------------------------------------------
-act(ClientAddress, {register, Id, Name, ClientPort}) ->
+act(ClientAddress, {register, Id, ClientPort}) ->
     io:format("register o id ~p.~n", [Id]),
-    ets:insert(dom_clients, {Id, Name, ClientAddress, ClientPort}),
-    io:format("Rejestruje klienta o id ~p i nazwie ~p.~n", [Id, Name]);
+    ets:insert(dom_clients, {Id, ClientAddress, ClientPort}),
+    io:format("Rejestruje klienta o id ~p~n", [Id]);
 act(_, {data, Id, Data}) ->
     ets:insert(dom_data, {Id, Data}),
     io:format("Otrzymalem dane od ID ~p: ~p~n", [Id, Data]),
@@ -117,7 +117,7 @@ get_data(Id) ->
 send_to(Id, Data) ->
     case ets:lookup(dom_clients, Id) of
         [] -> nil;
-        [{Id, _, ClientAddress, ClientPort}] ->
+        [{Id, ClientAddress, ClientPort}] ->
             dom_net:send(ClientAddress, ClientPort, Data)
     end.
 

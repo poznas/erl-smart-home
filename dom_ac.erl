@@ -1,5 +1,5 @@
 -module(dom_ac).
--export([start/4, stop/3, loop/3]).
+-export([start/0, stop/0, loop/0]).
 
 %%%-------------------
 %%% dom_ac symuluje zachowanie kontrolera klimatyzacji
@@ -8,20 +8,20 @@
 %%%
 %%%-------------------
 
+port() -> 8081.
+id() -> ac.
+
 
 %%-------------------------
 %% funckja start
 %% rejestruje kontroler na serwerze,
 %% uruchamia kontroler klimatyzacji na danym porcie
 %%-------------------------
-start(ServerAddress, ServerPort, Id, Name) ->
+start() ->
     try
-        io:format("Uruchamiam kontroler klimatyzacji o id: ~p...~n", [Id]),
-        PID = spawn(dom_ac, loop, [ServerAddress, ServerPort, Id]),
-        ets:new(dom_pids, [set, named_table]),
-        ets:insert(dom_pids, {loop, PID}),
-        dom_client:register(ServerAddress, ServerPort, Id, Name, 8081),
-        start
+        io:format("Uruchamiam kontroler klimatyzacji o id: ~p...~n", [id()]),
+        dom_client:register(controller:address(), controller:port(), id(), port()),
+        loop()
     catch
         _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
         blad
@@ -31,13 +31,13 @@ start(ServerAddress, ServerPort, Id, Name) ->
   %% funckja stop
   %% zatrzymuje działanie kontrolera klimatyzacji
   %%-------------------------
-stop(ServerAddress, ServerPort, Id) ->
+stop() ->
     try
-        dom_client:delete(ServerAddress, ServerPort, Id),
+        dom_client:delete(controller:address(), controller:port(), id()),
         PID = element(2, hd(ets:lookup(dom_pids, loop))),
         exit(PID, stop),
         ets:delete(dom_pids),
-        io:format("Zatrzymuje kontroler klimatyzacji o ID ~p...~n", [Id]),
+        io:format("Zatrzymuje kontroler klimatyzacji o ID ~p...~n", [id()]),
         stop
     catch
         _:_ -> io:format("Brak dzialajacego czujnika na tym procesie!~n"),
@@ -49,8 +49,8 @@ stop(ServerAddress, ServerPort, Id) ->
   %% dostaje informacje czy włączyć czy wyłączyć klimatyzację
   %%-------------------------
 
-loop(ServerAddress, ServerPort, Id) ->
-    case dom_net:read(8081) of
+loop() ->
+    case dom_net:read(port()) of
         {_, _, wlacz} ->
             io:format("Wlaczam klimatyzacje ~n");
         {_, _, wylacz} ->
@@ -58,4 +58,4 @@ loop(ServerAddress, ServerPort, Id) ->
         _ ->
             nil
     end,
-    loop(ServerAddress, ServerPort, Id).
+    loop().

@@ -18,7 +18,7 @@ start(ServerAddress, ServerPort, Id, Name) ->
         PID = spawn(dom_temp, loop, [ServerAddress, ServerPort, Id]),
         ets:new(dom_pids, [set, named_table]),
         ets:insert(dom_pids, {loop, PID}),
-        dom_client:register(ServerAddress, ServerPort, Id, Name, 0),
+        dom_client:register(ServerAddress, ServerPort, Id, 0),
         start
     catch
         _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),

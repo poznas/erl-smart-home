@@ -8,7 +8,6 @@
 
 port() -> 8084.
 id() -> sms.
-name() -> sms.
 
 %%-------------------------
 %% Funckja start
@@ -19,7 +18,7 @@ name() -> sms.
 start() ->
     try
         io:format("Uruchamiam kontroler sms o id: ~p...~n", [id()]),
-        dom_client:register(controller:address(), controller:port(), id(), name(), port()),
+        dom_client:register(controller:address(), controller:port(), id(), port()),
         loop()
     catch
         _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
