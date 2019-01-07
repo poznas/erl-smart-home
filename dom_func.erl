@@ -12,9 +12,9 @@
 temp(nil) -> nil;
 temp(Data) when Data > 28 ->
     io:format("Temperatura wynosi ~p, wlaczam klimatyzacje...~n", [Data]),
-    dom_server:send_to(klim, wlacz);
+    controller:send_to(klim, wlacz);
 temp(_)  ->
-    dom_server:send_to(klim, wylacz).
+    controller:send_to(klim, wylacz).
 
 
 %%------------------------------------------------------------------------------
@@ -24,7 +24,7 @@ temp(_)  ->
 %%------------------------------------------------------------------------------
 alarm(tak) ->
     io:format("Ktos wlamuje sie do domu, alarm!~n"),
-    dom_server:send_to(sms, "Ktos wlamuje sie do domu, alarm!");
+    controller:send_to(sms, "Ktos wlamuje sie do domu, alarm!");
 alarm(_) -> nil.
 
 %%------------------------------------------------------------------------------
@@ -35,8 +35,8 @@ alarm(_) -> nil.
 %%------------------------------------------------------------------------------
 dym(tak) ->
     io:format("Czujnik wykryl dym!~n"),
-    dom_server:send_to(sms, "Czujnik wykryl dym!"),
+    controller:send_to(sms, "Czujnik wykryl dym!"),
     io:format("Otwieram okna...~n"),
-    dom_server:send_to(okno, otworz);
+    controller:send_to(okno, otworz);
 dym(_) ->
-    dom_server:send_to(okno, zamknij).
+    controller:send_to(okno, zamknij).

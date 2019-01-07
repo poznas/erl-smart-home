@@ -2,7 +2,7 @@
 -export([start/0]).
 
 start() -> 
-    ControllerPID = spawn(fun () -> dom_server:start() end),
+    ControllerPID = spawn(fun () -> controller:start() end),
     io:format("Run controller: ~p~n", [ControllerPID]),
     timer:sleep(timer:seconds(3)),
     LedPID = spawn(fun () -> dom_sms:start() end),

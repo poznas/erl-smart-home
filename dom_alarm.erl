@@ -6,8 +6,6 @@
 %%% funkcje: start, stop, loop
 %%%-------------------
 
-serverAddress() -> {127,0,0,1}.
-serverPort() -> 5000.
 id() -> alarm.
 name() -> alarm.
 
@@ -20,7 +18,7 @@ name() -> alarm.
 start() ->
     try
         io:format("Uruchamiam czujnik alarmu o Id: ~p...~n", [id()]),
-        dom_client:register(serverAddress(), serverPort(), id(), name(), 0),
+        dom_client:register(controller:address(), controller:port(), id(), name(), 0),
         loop()
     catch
         _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
@@ -34,7 +32,7 @@ start() ->
 
 stop() ->
     try
-        dom_client:delete(serverAddress(), serverPort(), id()),
+        dom_client:delete(controller:address(), controller:port(), id()),
         PId = element(2, hd(ets:lookup(dom_pids, loop))),
         exit(PId, stop),
         ets:delete(dom_pids),
@@ -53,9 +51,9 @@ stop() ->
 loop() ->
     case random:uniform(1) of
         1 ->
-            dom_client:data(serverAddress(), serverPort(), id(), tak);
+            dom_client:data(controller:address(), controller:port(), id(), tak);
         _ ->
-        dom_client:data(serverAddress(), serverPort(), id(), nie)
+        dom_client:data(controller:address(), controller:port(), id(), nie)
     end,
     timer:sleep(timer:seconds(10)),
     loop().

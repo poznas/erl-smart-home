@@ -1,5 +1,5 @@
--module(dom_server).
--export([start/0, stop/0, add_func/2, send_to/2]).
+-module(controller).
+-export([start/0, stop/0, add_func/2, send_to/2, port/0, address/0]).
 %%%-----------------------------------------------------------------------------
 %%% Glowny serwer aplikacji.
 %%% Zajmuje sie wymiana danych pomiedzy klientami oraz wykonywaniem odpowiednich
@@ -7,6 +7,7 @@
 %%%-----------------------------------------------------------------------------
 
 port() -> 5000.
+address() -> {127,0,0,1}.
 
 %%------------------------------------------------------------------------------
 %% Funkcja: start/1

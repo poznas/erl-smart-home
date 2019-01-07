@@ -7,9 +7,6 @@
 %%%-------------------
 
 port() -> 8084.
-
-serverAddress() -> {127,0,0,1}.
-serverPort() -> 5000.
 id() -> sms.
 name() -> sms.
 
@@ -22,7 +19,7 @@ name() -> sms.
 start() ->
     try
         io:format("Uruchamiam kontroler sms o id: ~p...~n", [id()]),
-        dom_client:register(serverAddress(), serverPort(), id(), name(), port()),
+        dom_client:register(controller:address(), controller:port(), id(), name(), port()),
         loop()
     catch
         _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
@@ -36,7 +33,7 @@ start() ->
 
 stop() ->
     try
-        dom_client:delete(serverAddress(), serverPort(), id()),
+        dom_client:delete(controller:address(), controller:port(), id()),
         PID = element(2, hd(ets:lookup(dom_pids, loop))),
         exit(PID, stop),
         ets:delete(dom_pids),
