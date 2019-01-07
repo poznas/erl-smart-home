@@ -1,10 +1,13 @@
--module(dom_okno).
--export([start/4, stop/3, loop/3]).
+-module(fire_sprinkler).
+-export([start/0, stop/0, loop/0]).
 
 %%%-------------------
 %%% dom_okno symuluje zachowanie kontrolera wysyłania sms.
 %%% funkcje: start, stop, loop
 %%%-------------------
+
+port() -> 8089.
+id() -> sprinkler.
 
 %%-------------------------
 %% Funckja start
@@ -13,14 +16,11 @@
 %%-------------------------
 
 
-start(ServerAddress, ServerPort, Id, Name) ->
+start() ->
     try
-        io:format("Uruchamiam kontroler okien o id: ~p...~n", [Id]),
-        PID = spawn(dom_okno, loop, [ServerAddress, ServerPort, Id]),
-        ets:new(dom_pids, [set, named_table]),
-        ets:insert(dom_pids, {loop, PID}),
-        dom_client:register(ServerAddress, ServerPort, Id, 8085),
-        start
+        io:format("Launching fire sprinkler: ~p...~n", [id()]),
+        dom_client:register(controller:address(), controller:port(), id(), port()),
+        loop()
     catch
         _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
         blad
@@ -31,13 +31,10 @@ start(ServerAddress, ServerPort, Id, Name) ->
 %% Zatrzymuje działanie kontrolera.
 %%-------------------------
 
-stop(ServerAddress, ServerPort, Id) ->
+stop() ->
     try
-        dom_client:delete(ServerAddress, ServerPort, Id),
-        PID = element(2, hd(ets:lookup(dom_pids, loop))),
-        exit(PID, stop),
-        ets:delete(dom_pids),
-        io:format("Zatrzymuje kontroler okien o ID ~p...~n", [Id]),
+        dom_client:delete(controller:address(), controller:port(), id()),
+        io:format("Zatrzymuje kontroler kutas o ID ~p...~n", [id()]),
         stop
     catch
         _:_ -> io:format("Brak dzialajacego czujnika na tym procesie!~n"),
@@ -49,8 +46,8 @@ stop(ServerAddress, ServerPort, Id) ->
 %% Dostaje informacje z informacją, czy otworzyć okna.
 %%-------------------------
 
-loop(ServerAddress, ServerPort, Id) ->
-    case dom_net:read(8085) of
+loop() ->
+    case dom_net:read(port()) of
         {_, _, otworz} ->
             io:format("Otwieram okna ~n");
         {_, _, zamknij} ->
@@ -58,4 +55,4 @@ loop(ServerAddress, ServerPort, Id) ->
         _ ->
             nil
     end,
-    loop(ServerAddress, ServerPort, Id).
+    loop().

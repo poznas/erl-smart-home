@@ -26,7 +26,7 @@ start() ->
         io:format("Uruchamiam serwer na porcie ~p...~n", [port()]),
 
         add_func(temp, fun dom_func:temp/1), 
-        add_func(dym, fun dom_func:dym/1), 
+        add_func(smoke, fun dom_func:dym/1), 
         add_func(alarm, fun dom_func:alarm/1), 
 
         read(port())

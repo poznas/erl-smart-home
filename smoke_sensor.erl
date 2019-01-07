@@ -1,24 +1,23 @@
--module(dom_dym).
--export([start/4, stop/3, loop/3]).
+-module(smoke_sensor).
+-export([start/0, stop/0, loop/0]).
 
 %%%-------------------
 %%% dom_dym symuluje zachowanie czujnika dymu.
 %%% funkcje: start, stop, loop
 %%%-------------------
 
+id() -> smoke.
+
 %%-------------------------
 %% Funckja start
 %% Rejestruje czujnik na serwerze,
 %% uruchamia czujnik dymu na danym porcie.
 %%-------------------------
-start(ServerAddress, ServerPort, Id, Name) ->
+start() ->
     try
-        io:format("Uruchamiam czujnik dymu o id: ~p...~n", [Id]),
-        PID = spawn(dom_dym, loop, [ServerAddress, ServerPort, Id]),
-        ets:new(dom_pids, [set, named_table]),
-        ets:insert(dom_pids, {loop, PID}),
-        dom_client:register(ServerAddress, ServerPort, Id, 0),
-        start
+        io:format("Uruchamiam czujnik dymu o Id: ~p...~n", [id()]),
+        dom_client:register(controller:address(), controller:port(), id(), 0),
+        loop()
     catch
         _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
         blad
@@ -29,13 +28,13 @@ start(ServerAddress, ServerPort, Id, Name) ->
 %% Zatrzymuje działanie czujnika dymu.
 %%-------------------------
 
-stop(ServerAddress, ServerPort, Id) ->
+stop() ->
     try
-        dom_client:delete(ServerAddress, ServerPort, Id),
-        PID = element(2, hd(ets:lookup(dom_pids, loop))),
-        exit(PID, stop),
+        dom_client:delete(controller:address(), controller:port(), id()),
+        PId = element(2, hd(ets:lookup(dom_pids, loop))),
+        exit(PId, stop),
         ets:delete(dom_pids),
-        io:format("Zatrzymuje czujnik dymu o ID ~p...~n", [Id]),
+        io:format("Zatrzymuje czujnik dymu o Id ~p...~n", [id()]),
         stop
     catch
         _:_ -> io:format("Brak dzialajacego czujnika na tym procesie!~n"),
@@ -47,13 +46,13 @@ stop(ServerAddress, ServerPort, Id) ->
 %% Wysyła co 10 sekund do serwera informacje o obecności dymu.
 %%-------------------------
 
-    loop(ServerAddress, ServerPort, Id) ->
+    loop() ->
          %-- random mdz 0 i 1
         case random:uniform(2) of
             1 ->
-                dom_client:data(ServerAddress, ServerPort, Id, tak);
+            dom_client:data(controller:address(), controller:port(), id(), tak);
             _ ->
-                dom_client:data(ServerAddress, ServerPort, Id, nie)
+            dom_client:data(controller:address(), controller:port(), id(), nie)
         end,
         timer:sleep(timer:seconds(10)),
-        loop(ServerAddress, ServerPort, Id).
+        loop().
