@@ -1,5 +1,5 @@
--module(dom_net).
--export([read/1, read/2, send/3]).
+-module(consumer_utils).
+-export([listen/1]).
 %%%-----------------------------------------------------------------------------
 %%% Funkcje pomocnicze do wygodnej komunikacji przez protokol UDP.
 %%%-----------------------------------------------------------------------------
@@ -12,10 +12,10 @@
 %% Zwraca: Krotka w formacie {SenderAddress, SenderPort, Data} lub {}
 %%     jesli wystapil blad lub nie odebrano danych.
 %%------------------------------------------------------------------------------
-read(Port, Timeout) ->
+listen(Port, Timeout) ->
     case gen_udp:open(Port, [binary, {active, false}]) of
         {ok, Socket} ->
-            Return = recv(Socket, Timeout);
+            Return = listenSocket(Socket, Timeout);
         {error, eaddrinuse} ->
             io:format("Port ~p jest już zajęty przez inny proces!~n", [Port]),
             Return = {error, eaddrinuse};
@@ -32,8 +32,8 @@ read(Port, Timeout) ->
 %% Zwraca: Krotka w formacie {SenderAddress, SenderPort, Data} lub {}
 %%     jesli wystapil blad lub nie odebrano danych.
 %%------------------------------------------------------------------------------
-read(Port) ->
-    read(Port, 100000).
+listen(Port) ->
+    listen(Port, 100000).
 
 %%------------------------------------------------------------------------------
 %% Function: recv/2
@@ -42,7 +42,7 @@ read(Port) ->
 %% Returns: Touple in format {SenderAddress, SenderPort, Data} or {error, Reason}
 %%     if errror occured or {}.
 %%------------------------------------------------------------------------------
-recv(Socket, Timeout) ->
+listenSocket(Socket, Timeout) ->
     case gen_udp:recv(Socket, 0, Timeout) of
         {ok, {Address, Port, Packet}} ->
             Return = {Address, Port, binary_to_term(Packet)};
@@ -52,12 +52,3 @@ recv(Socket, Timeout) ->
     end,
     gen_tcp:close(Socket),
     Return.
-
-%%------------------------------------------------------------------------------
-%% Funkcja: send/3
-%% Cel: Wysyla dane przez protokol UDP na podany adress i port.
-%% Argumenty: Adres docelowy jako krotka, port oraz dane do wyslania.
-%%------------------------------------------------------------------------------
-send(Address, Port, Data) ->
-    {ok, Socket} = gen_udp:open(0, [binary, {active, false}]),
-    gen_udp:send(Socket, Address, Port, term_to_binary(Data)).

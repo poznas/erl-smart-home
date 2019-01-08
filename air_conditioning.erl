@@ -1,5 +1,5 @@
--module(dom_ac).
--export([start/0, stop/0, loop/0]).
+-module(air_conditioning).
+-export([start/0, stop/0]).
 
 %%%-------------------
 %%% dom_ac symuluje zachowanie kontrolera klimatyzacji
@@ -20,11 +20,12 @@ id() -> ac.
 start() ->
     try
         io:format("Uruchamiam kontroler klimatyzacji o id: ~p...~n", [id()]),
-        dom_client:register(controller:address(), controller:port(), id(), port()),
-        loop()
+        emitter_utils:register(controller:address(), controller:port(), id(), port()),
+        listen(),
+        start
     catch
         _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
-        blad
+        error
     end.
 
   %%-------------------------
@@ -33,15 +34,12 @@ start() ->
   %%-------------------------
 stop() ->
     try
-        dom_client:delete(controller:address(), controller:port(), id()),
-        PID = element(2, hd(ets:lookup(dom_pids, loop))),
-        exit(PID, stop),
-        ets:delete(dom_pids),
+        emitter_utils:unregister(controller:address(), controller:port(), id()),
         io:format("Zatrzymuje kontroler klimatyzacji o ID ~p...~n", [id()]),
-        stop
+        exit(self(), normal)
     catch
         _:_ -> io:format("Brak dzialajacego czujnika na tym procesie!~n"),
-        blad
+        error
     end.
 
   %%-------------------------
@@ -49,13 +47,13 @@ stop() ->
   %% dostaje informacje czy włączyć czy wyłączyć klimatyzację
   %%-------------------------
 
-loop() ->
-    case dom_net:read(port()) of
-        {_, _, wlacz} ->
+listen() ->
+    case consumer_utils:listen(port()) of
+        {_, _, on} ->
             io:format("Wlaczam klimatyzacje ~n");
-        {_, _, wylacz} ->
+        {_, _, off} ->
             io:format("Wylaczam klimatyzacje ~n");
         _ ->
             nil
     end,
-    loop().
+    listen().

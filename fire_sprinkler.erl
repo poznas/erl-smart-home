@@ -1,5 +1,5 @@
 -module(fire_sprinkler).
--export([start/0, stop/0, loop/0]).
+-export([start/0, stop/0]).
 
 %%%-------------------
 %%% dom_okno symuluje zachowanie kontrolera wysyłania sms.
@@ -19,11 +19,12 @@ id() -> sprinkler.
 start() ->
     try
         io:format("Launching fire sprinkler: ~p...~n", [id()]),
-        dom_client:register(controller:address(), controller:port(), id(), port()),
-        loop()
+        emitter_utils:register(controller:address(), controller:port(), id(), port()),
+        listen(),
+        start
     catch
         _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
-        blad
+        error
     end.
 
 %%-------------------------
@@ -33,9 +34,9 @@ start() ->
 
 stop() ->
     try
-        dom_client:delete(controller:address(), controller:port(), id()),
+        emitter_utils:unregister(controller:address(), controller:port(), id()),
         io:format("Zatrzymuje kontroler kutas o ID ~p...~n", [id()]),
-        stop
+        exit(self(), normal)
     catch
         _:_ -> io:format("Brak dzialajacego czujnika na tym procesie!~n"),
         blad
@@ -46,13 +47,13 @@ stop() ->
 %% Dostaje informacje z informacją, czy otworzyć okna.
 %%-------------------------
 
-loop() ->
-    case dom_net:read(port()) of
-        {_, _, otworz} ->
+listen() ->
+    case consumer_utils:listen(port()) of
+        {_, _, on} ->
             io:format("Otwieram okna ~n");
-        {_, _, zamknij} ->
+        {_, _, off} ->
             io:format("Zamykam okna ~n");
         _ ->
             nil
     end,
-    loop().
+    listen().

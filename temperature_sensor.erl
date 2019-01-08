@@ -1,5 +1,5 @@
--module(dom_temp).
--export([start/0, stop/0, loop/0]).
+-module(temperature_sensor).
+-export([start/0, stop/0]).
 
 %%%-------------------
 %%% dom_temp symuluje zachowanie czujnika temperatury
@@ -16,11 +16,11 @@ id() -> temp.
 start() ->
     try
         io:format("Uruchamiam czujnik temperatury o Id: ~p...~n", [id()]),
-        dom_client:register(controller:address(), controller:port(), id(), 0),
-        loop()
+        emitter_utils:register(controller:address(), controller:port(), id(), 0),
+        emit()
     catch
         _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
-        blad
+        error
     end.
 
 %%-------------------------
@@ -29,11 +29,9 @@ start() ->
 %%-------------------------
 stop() ->
     try
-        dom_client:delete(controller:address(), controller:port(), id()),
-        PId = element(2, hd(ets:lookup(dom_pids, loop))),
-        exit(PId, stop),
-        ets:delete(dom_pids),
-        io:format("Zatrzymuje czujnik alarmu o Id ~p...~n", [id()])
+        emitter_utils:unregister(controller:address(), controller:port(), id()),
+        io:format("Zatrzymuje czujnik alarmu o Id ~p...~n", [id()]),
+        exit(self(), normal)
     catch
         _:_ -> io:format("Brak dzialajacego czujnika na tym procesie!~n"),
         blad
@@ -44,7 +42,7 @@ stop() ->
 %% Wysyła co 5 sekund do serwera informacje o temperaturze.
 %%-------------------------
 
-loop() ->
-    dom_client:data(controller:address(), controller:port(), id(), random:uniform(40)),
+emit() ->
+    emitter_utils:sendData(controller:address(), controller:port(), id(), random:uniform(40)),
     timer:sleep(timer:seconds(5)),
-    loop().
+    emit().

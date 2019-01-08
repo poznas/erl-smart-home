@@ -1,5 +1,5 @@
 -module(smoke_sensor).
--export([start/0, stop/0, loop/0]).
+-export([start/0, stop/0]).
 
 %%%-------------------
 %%% dom_dym symuluje zachowanie czujnika dymu.
@@ -16,11 +16,11 @@ id() -> smoke.
 start() ->
     try
         io:format("Uruchamiam czujnik dymu o Id: ~p...~n", [id()]),
-        dom_client:register(controller:address(), controller:port(), id(), 0),
-        loop()
+        emitter_utils:register(controller:address(), controller:port(), id(), 0),
+        emit()
     catch
         _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
-        blad
+        error
     end.
 
 %%-------------------------
@@ -30,15 +30,12 @@ start() ->
 
 stop() ->
     try
-        dom_client:delete(controller:address(), controller:port(), id()),
-        PId = element(2, hd(ets:lookup(dom_pids, loop))),
-        exit(PId, stop),
-        ets:delete(dom_pids),
-        io:format("Zatrzymuje czujnik dymu o Id ~p...~n", [id()]),
-        stop
+        emitter_utils:unregister(controller:address(), controller:port(), id()),
+        io:format("Zatrzymuje kontroler dym kurwa chuj o ID ~p...~n", [id()]),
+        exit(self(), normal)
     catch
         _:_ -> io:format("Brak dzialajacego czujnika na tym procesie!~n"),
-        blad
+        error
     end.
 
 %%-------------------------
@@ -46,13 +43,12 @@ stop() ->
 %% Wysyła co 10 sekund do serwera informacje o obecności dymu.
 %%-------------------------
 
-    loop() ->
-         %-- random mdz 0 i 1
-        case random:uniform(2) of
-            1 ->
-            dom_client:data(controller:address(), controller:port(), id(), tak);
-            _ ->
-            dom_client:data(controller:address(), controller:port(), id(), nie)
-        end,
-        timer:sleep(timer:seconds(10)),
-        loop().
+emit() ->
+    case random:uniform(2) of
+        1 ->
+        emitter_utils:sendData(controller:address(), controller:port(), id(), tak);
+        _ ->
+        emitter_utils:sendData(controller:address(), controller:port(), id(), nie)
+    end,
+    timer:sleep(timer:seconds(10)),
+    emit().

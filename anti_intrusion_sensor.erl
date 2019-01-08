@@ -1,12 +1,12 @@
--module(dom_alarm).
--export([start/0, stop/0, loop/0]).
+-module(anti_intrusion_sensor).
+-export([start/0, stop/0]).
 
 %%%-------------------
 %%% dom_alarm symuluje zachowanie czujnika alarmu.
 %%% funkcje: start, stop, loop
 %%%-------------------
 
-id() -> alarm.
+id() -> intrusion.
 
 %%-------------------------
 %% Funckja start
@@ -17,11 +17,11 @@ id() -> alarm.
 start() ->
     try
         io:format("Uruchamiam czujnik alarmu o Id: ~p...~n", [id()]),
-        dom_client:register(controller:address(), controller:port(), id(), 0),
-        loop()
+        emitter_utils:register(controller:address(), controller:port(), id(), 0),
+        emit()
     catch
         _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
-        blad
+        error
     end.
 
 %%-------------------------
@@ -31,15 +31,12 @@ start() ->
 
 stop() ->
     try
-        dom_client:delete(controller:address(), controller:port(), id()),
-        PId = element(2, hd(ets:lookup(dom_pids, loop))),
-        exit(PId, stop),
-        ets:delete(dom_pids),
+        emitter_utils:unregister(controller:address(), controller:port(), id()),
         io:format("Zatrzymuje czujnik alarmu o Id ~p...~n", [id()]),
-        stop
+        exit(self(), normal)
     catch
         _:_ -> io:format("Brak dzialajacego czujnika na tym procesie!~n"),
-        blad
+        error
     end.
 
 %%-------------------------
@@ -47,12 +44,12 @@ stop() ->
 %% Wysyła co 10 sekund do serwera informacje, czy doszło do włamania.
 %%-------------------------
 
-loop() ->
+emit() ->
     case random:uniform(1) of
         1 ->
-            dom_client:data(controller:address(), controller:port(), id(), tak);
+            emitter_utils:sendData(controller:address(), controller:port(), id(), yes);
         _ ->
-        dom_client:data(controller:address(), controller:port(), id(), nie)
+        emitter_utils:sendData(controller:address(), controller:port(), id(), no)
     end,
     timer:sleep(timer:seconds(10)),
-    loop().
+    emit().

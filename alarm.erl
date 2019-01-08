@@ -1,5 +1,5 @@
--module(dom_sms).
--export([start/0, stop/0, loop/0]).
+-module(alarm).
+-export([start/0, stop/0]).
 
 %%%-------------------
 %%% dom_sms symuluje zachowanie kontrolera wysyłania sms.
@@ -7,7 +7,7 @@
 %%%-------------------
 
 port() -> 8084.
-id() -> sms.
+id() -> alarm.
 
 %%-------------------------
 %% Funckja start
@@ -18,11 +18,12 @@ id() -> sms.
 start() ->
     try
         io:format("Uruchamiam kontroler sms o id: ~p...~n", [id()]),
-        dom_client:register(controller:address(), controller:port(), id(), port()),
-        loop()
+        emitter_utils:register(controller:address(), controller:port(), id(), port()),
+        listen(),
+        start
     catch
         _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
-        blad
+        error
     end.
 
 %%-------------------------
@@ -32,27 +33,24 @@ start() ->
 
 stop() ->
     try
-        dom_client:delete(controller:address(), controller:port(), id()),
-        PID = element(2, hd(ets:lookup(dom_pids, loop))),
-        exit(PID, stop),
-        ets:delete(dom_pids),
+        emitter_utils:unregister(controller:address(), controller:port(), id()),
         io:format("Zatrzymuje kontroler sms o ID ~p...~n", [id()]),
-        stop
+        exit(self(), normal)
     catch
         _:_ -> io:format("Brak dzialajacego czujnika na tym procesie!~n"),
-        blad
+        error
     end.
 
 %%-------------------------
 %% Funckja loop
 %% Dostaje informacje aby wysłać sms o podanej treści.
-%%-------------------------
+%%------------------------- TODO: blink LED Rpi
 
-loop() ->
-    case dom_net:read(port()) of
+listen() ->
+    case consumer_utils:listen(port()) of
         {_, _, Tresc} ->
             io:format("Wysylam sms: ~p ~n", [Tresc]);
         _ ->
             nil
     end,
-    loop().
+    listen().

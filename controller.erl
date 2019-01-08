@@ -1,5 +1,5 @@
 -module(controller).
--export([start/0, stop/0, add_func/2, send_to/2, port/0, address/0]).
+-export([start/0, stop/0, port/0, address/0, handleTemperature/1, handleSmoke/1, hanleIntrusion/1]).
 %%%-----------------------------------------------------------------------------
 %%% Glowny serwer aplikacji.
 %%% Zajmuje sie wymiana danych pomiedzy klientami oraz wykonywaniem odpowiednich
@@ -17,21 +17,19 @@ address() -> {127,0,0,1}.
 %%------------------------------------------------------------------------------
 start() ->
     try
-        ets:new(dom_pids, [set, named_table]),
-        ets:insert(dom_pids, {read, port(), self()}),
-
-        ets:new(dom_clients, [set, named_table, public]),
-        ets:new(dom_data, [set, named_table, public]),
-        ets:new(dom_func, [bag, named_table, public]),
+        ets:new(clientSet, [set, named_table, public]),
+        ets:new(dataSet, [set, named_table, public]),
+        ets:new(signalHandlers, [bag, named_table, public]),
         io:format("Uruchamiam serwer na porcie ~p...~n", [port()]),
 
-        add_func(temp, fun dom_func:temp/1), 
-        add_func(smoke, fun dom_func:dym/1), 
-        add_func(alarm, fun dom_func:alarm/1), 
+        ets:insert(signalHandlers, {temp, fun handleTemperature/1}),
+        ets:insert(signalHandlers, {smoke, fun handleSmoke/1}),
+        ets:insert(signalHandlers, {intrusion, fun hanleIntrusion/1}),
 
-        read(port())
+        listen(port()),
+        start
     catch
-        _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden serwer!~n", []),
+        A:B -> io:format("Error while running controller process: ~p, ~p~n", [A, B]),
         error
     end.
 
@@ -43,15 +41,11 @@ start() ->
 %%------------------------------------------------------------------------------
 stop() ->
     try
-        PID = hd(hd(ets:match(dom_pids, {read, port(), '$1'}))),
-        exit(PID, stop),
-        ets:match_delete(dom_pids, {read, port(), '_'}),
-        ets:delete(dom_pids),
-        ets:delete(dom_clients),
-        ets:delete(dom_data),
-        ets:delete(dom_func),
+        ets:delete(clientSet),
+        ets:delete(dataSet),
+        ets:delete(signalHandlers),
         io:format("Zatrzymano serwer!~n"),
-        stop
+        exit(self(), normal)
     catch
         _:_ -> io:format("Brak dzialajacego serwera na porcie ~p!~n", [port()]),
         error
@@ -63,14 +57,13 @@ stop() ->
 %%     w zaleznosci od otrzymanych danych.
 %% Argumenty: Port - numer portu.
 %%------------------------------------------------------------------------------
-read(Port) ->
-    io:format("listen to ~p~n", [Port]),
-    case dom_net:read(Port) of
+listen(Port) ->
+    case consumer_utils:listen(Port) of
         {error, _} ->
             stop();
         {ClientAddress, _, Data} ->
             spawn(fun () -> act(ClientAddress, Data) end),
-            read(Port);
+            listen(Port);
         _ ->
             stop()
     end.
@@ -82,15 +75,15 @@ read(Port) ->
 %%------------------------------------------------------------------------------
 act(ClientAddress, {register, Id, ClientPort}) ->
     io:format("register o id ~p.~n", [Id]),
-    ets:insert(dom_clients, {Id, ClientAddress, ClientPort}),
+    ets:insert(clientSet, {Id, ClientAddress, ClientPort}),
     io:format("Rejestruje klienta o id ~p~n", [Id]);
 act(_, {data, Id, Data}) ->
-    ets:insert(dom_data, {Id, Data}),
+    ets:insert(dataSet, {Id, Data}),
     io:format("Otrzymalem dane od ID ~p: ~p~n", [Id, Data]),
-    exec_func(Id);
+    handleSignal(Id);
 act(_, {delete, Id}) ->
     try
-        ets:delete(dom_clients, Id),
+        ets:delete(clientSet, Id),
         io:format("Usuwam klienta o id ~p.~n", [Id])
     catch
         error:badarg -> io:format("Brak dzialajacego klienta o id ~p!~n", [Id])
@@ -98,40 +91,27 @@ act(_, {delete, Id}) ->
 
 
 %%------------------------------------------------------------------------------
-%% Funkcja: get_data/1
+%% Funkcja: retrieveData/1
 %% Cel: Zwraca dane, ktore przyszly od clienta z podanym ID.
 %% Argumenty: ID klienta.
 %% Zwraca: Zapisane dane lub nil, jesli nie odebrano danych od klienta o podanym ID.
 %%------------------------------------------------------------------------------
-get_data(Id) ->
-    case ets:lookup(dom_data, Id) of
+retrieveData(Id) ->
+    case ets:lookup(dataSet, Id) of
         [] -> nil;
         [{Id, Data}] -> Data
     end.
 
 %%------------------------------------------------------------------------------
-%% Funkcja: send_to/2
+%% Funkcja: forwardSignal/2
 %% Cel: Wysyla podane dane do klienta o podanym ID.
 %% Argumenty: ID klienta, dane do wyslania.
 %%------------------------------------------------------------------------------
-send_to(Id, Data) ->
-    case ets:lookup(dom_clients, Id) of
+forwardSignal(Id, Data) ->
+    case ets:lookup(clientSet, Id) of
         [] -> nil;
         [{Id, ClientAddress, ClientPort}] ->
-            dom_net:send(ClientAddress, ClientPort, Data)
-    end.
-
-%%------------------------------------------------------------------------------
-%% Funkcja: add_func/2
-%% Cel: Dodaje funkcje reagujaca na otrzymanie danych od klienta o podanym ID.
-%% Argumenty: ID klienta, funkcja reagujaca przyjmujaca jako argument otrzymane dane.
-%%------------------------------------------------------------------------------
-add_func(Id, Func) ->
-    case is_function(Func) of
-        true ->
-            ets:insert(dom_func, {Id, Func});
-        false ->
-            io:format("Podany argument ~p nie jest funkcja!~n", [Func])
+            emitter_utils:send(ClientAddress, ClientPort, Data)
     end.
 
 %%------------------------------------------------------------------------------
@@ -140,9 +120,48 @@ add_func(Id, Func) ->
 %%     o podanym ID.
 %% Argumenty: ID klienta
 %%------------------------------------------------------------------------------
-exec_func(Id) ->
-    case ets:lookup(dom_func, Id) of
+handleSignal(Id) ->
+    case ets:lookup(signalHandlers, Id) of
         [] -> nil;
         Funcs ->
-                lists:map(fun ({_, Func}) -> Func(get_data(Id)) end, Funcs)
+                lists:map(fun ({_, Func}) -> Func(retrieveData(Id)) end, Funcs)
     end.
+
+
+%%------------------------------------------------------------------------------
+%% Funkcja: temp/1
+%% Cel: Reaguje na podana wartosc temperatury wlaczajac klimatyzacje w razie potrzeby.
+%% Argumenty: Wartosc temperatury.
+%%------------------------------------------------------------------------------
+handleTemperature(nil) -> nil;
+handleTemperature(Data) when Data > 28 ->
+    io:format("Temperature is ~p, Air Conditioning ON~n", [Data]),
+    forwardSignal(ac, on);
+handleTemperature(_)  ->
+    io:format("Temperature is fine, Air Conditioning OFF~n"),
+    forwardSignal(ac, off).
+
+
+%%------------------------------------------------------------------------------
+%% Funkcja: alarm/1
+%% Cel: Reaguje na stan alarmu, wysylajac SMS jesli zostal on aktywowany.
+%% Argumenty: Stan alarmu.
+%%------------------------------------------------------------------------------
+hanleIntrusion(yes) ->
+    io:format("Ktos wlamuje sie do domu, alarm!~n"),
+    forwardSignal(alarm, "Ktos wlamuje sie do domu, alarm!");
+hanleIntrusion(_) -> nil.
+
+%%------------------------------------------------------------------------------
+%% Funkcja: alarm/1
+%% Cel: Reaguje na stan czujnika dymu, wysylajac SMS jesli zostal on aktywowany
+%%     oraz otwierajac okna.
+%% Argumenty: Stan czujnika dymu.
+%%------------------------------------------------------------------------------
+handleSmoke(yes) ->
+    io:format("Czujnik wykryl dym!~n"),
+    forwardSignal(alarm, "Czujnik wykryl dym!"),
+    io:format("Otwieram okna...~n"),
+    forwardSignal(sprinkler, on);
+handleSmoke(_) ->
+    forwardSignal(sprinkler, off).

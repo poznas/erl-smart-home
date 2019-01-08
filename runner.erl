@@ -13,11 +13,11 @@ start() ->
 
     % Signal consumers
 
-    AlarmPID = spawn(fun () -> dom_sms:start() end),
+    AlarmPID = spawn(fun () -> alarm:start() end),
     io:format("Run [Alarm] process: ~p~n", [AlarmPID]),
     timer:sleep(timer:seconds(launchTimeInterval())),
 
-    AC_PID = spawn(fun () -> dom_ac:start() end),
+    AC_PID = spawn(fun () -> air_conditioning:start() end),
     io:format("Run [Air Conditioning] process: ~p~n", [AC_PID]),
     timer:sleep(timer:seconds(launchTimeInterval())),
 
@@ -29,11 +29,11 @@ start() ->
 
     % Signal emitters
 
-    AI_PID = spawn(fun () -> dom_alarm:start() end),
+    AI_PID = spawn(fun () -> anti_intrusion_sensor:start() end),
     io:format("Run [Anti Intrusion Sensor] process: ~p~n", [AI_PID]),
     timer:sleep(timer:seconds(launchTimeInterval())),
 
-    TempPID = spawn(fun () -> dom_temp:start() end),
+    TempPID = spawn(fun () -> temperature_sensor:start() end),
     io:format("Run [Temperature Sensor] process: ~p~n", [TempPID]),
     timer:sleep(timer:seconds(launchTimeInterval())),
 
