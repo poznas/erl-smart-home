@@ -21,6 +21,7 @@ start() ->
     try
         io:format("Uruchamiam kontroler klimatyzacji o id: ~p...~n", [id()]),
         emitter_utils:register(controller:address(), controller:port(), id(), port()),
+        process_manager:register(id(), self()),
         listen(),
         start
     catch
@@ -36,7 +37,7 @@ stop() ->
     try
         emitter_utils:unregister(controller:address(), controller:port(), id()),
         io:format("Zatrzymuje kontroler klimatyzacji o ID ~p...~n", [id()]),
-        exit(self(), normal)
+        process_manager:kill(id())
     catch
         _:_ -> io:format("Brak dzialajacego czujnika na tym procesie!~n"),
         error

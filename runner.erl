@@ -1,9 +1,14 @@
 -module(runner).
--export([start/0]).
+-export([start/0, stop/0]).
 
 launchTimeInterval() -> 2.
+stopTimeInterval() -> 1.
 
 start() -> 
+
+    % Process Manager
+
+    process_manager:init(),
 
     % Controller
 
@@ -39,3 +44,37 @@ start() ->
 
     SmokePID = spawn(fun () -> smoke_sensor:start() end),
     io:format("Run [Smoke Sensor] process: ~p~n", [SmokePID]).
+
+
+stop() ->
+
+    % Signal emitters
+
+    smoke_sensor:stop(),
+    timer:sleep(timer:seconds(stopTimeInterval())),
+
+    temperature_sensor:stop(),
+    timer:sleep(timer:seconds(stopTimeInterval())),
+
+    anti_intrusion_sensor:stop(),
+    timer:sleep(timer:seconds(stopTimeInterval())),
+
+    % Signal consumers
+
+    alarm:stop(),
+    timer:sleep(timer:seconds(stopTimeInterval())),
+
+    air_conditioning:stop(),
+    timer:sleep(timer:seconds(stopTimeInterval())),
+
+    fire_sprinkler:stop(),
+    timer:sleep(timer:seconds(stopTimeInterval())),
+
+    % Controller
+
+    controller:stop(),
+
+    % Process Manager
+
+    process_manager:destroy().
+

@@ -19,7 +19,11 @@ start() ->
     try
         io:format("Uruchamiam kontroler sms o id: ~p...~n", [id()]),
         emitter_utils:register(controller:address(), controller:port(), id(), port()),
-        listen(),
+        Wx=wx:new(),
+        Frame=wxFrame:new(Wx, -1, "Alarm Frame"),
+        %wxFrame:show(Frame),
+        listen(Frame),
+        process_manager:register(id(), self()),
         start
     catch
         _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
@@ -35,7 +39,8 @@ stop() ->
     try
         emitter_utils:unregister(controller:address(), controller:port(), id()),
         io:format("Zatrzymuje kontroler sms o ID ~p...~n", [id()]),
-        exit(self(), normal)
+        wxFrame:destroy(),
+        process_manager:kill(id())
     catch
         _:_ -> io:format("Brak dzialajacego czujnika na tym procesie!~n"),
         error
@@ -44,13 +49,14 @@ stop() ->
 %%-------------------------
 %% Funckja loop
 %% Dostaje informacje aby wysłać sms o podanej treści.
-%%------------------------- TODO: blink LED Rpi
 
-listen() ->
+listen(Frame) ->
     case consumer_utils:listen(port()) of
-        {_, _, Tresc} ->
-            io:format("Wysylam sms: ~p ~n", [Tresc]);
+        {_, _, Message} ->
+            io:format("Show alarm dialog: ~p ~n", [Message]),
+            D = wxMessageDialog:new (Frame, "ALARM: " ++ Message),
+            wxMessageDialog:showModal (D);
         _ ->
             nil
     end,
-    listen().
+    listen(Frame).

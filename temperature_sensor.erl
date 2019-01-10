@@ -17,6 +17,7 @@ start() ->
     try
         io:format("Uruchamiam czujnik temperatury o Id: ~p...~n", [id()]),
         emitter_utils:register(controller:address(), controller:port(), id(), 0),
+        process_manager:register(id(), self()),
         emit()
     catch
         _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
@@ -31,10 +32,10 @@ stop() ->
     try
         emitter_utils:unregister(controller:address(), controller:port(), id()),
         io:format("Zatrzymuje czujnik alarmu o Id ~p...~n", [id()]),
-        exit(self(), normal)
+        process_manager:kill(id())
     catch
         _:_ -> io:format("Brak dzialajacego czujnika na tym procesie!~n"),
-        blad
+        error
     end.
 
 %%-------------------------

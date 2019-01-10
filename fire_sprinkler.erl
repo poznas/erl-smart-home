@@ -20,6 +20,7 @@ start() ->
     try
         io:format("Launching fire sprinkler: ~p...~n", [id()]),
         emitter_utils:register(controller:address(), controller:port(), id(), port()),
+        process_manager:register(id(), self()),
         listen(),
         start
     catch
@@ -36,10 +37,10 @@ stop() ->
     try
         emitter_utils:unregister(controller:address(), controller:port(), id()),
         io:format("Zatrzymuje kontroler kutas o ID ~p...~n", [id()]),
-        exit(self(), normal)
+        process_manager:kill(id())
     catch
         _:_ -> io:format("Brak dzialajacego czujnika na tym procesie!~n"),
-        blad
+        error
     end.
 
 %%-------------------------

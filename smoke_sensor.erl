@@ -17,6 +17,7 @@ start() ->
     try
         io:format("Uruchamiam czujnik dymu o Id: ~p...~n", [id()]),
         emitter_utils:register(controller:address(), controller:port(), id(), 0),
+        process_manager:register(id(), self()),
         emit()
     catch
         _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
@@ -32,7 +33,7 @@ stop() ->
     try
         emitter_utils:unregister(controller:address(), controller:port(), id()),
         io:format("Zatrzymuje kontroler dym kurwa chuj o ID ~p...~n", [id()]),
-        exit(self(), normal)
+        process_manager:kill(id())
     catch
         _:_ -> io:format("Brak dzialajacego czujnika na tym procesie!~n"),
         error
@@ -46,9 +47,9 @@ stop() ->
 emit() ->
     case random:uniform(2) of
         1 ->
-        emitter_utils:sendData(controller:address(), controller:port(), id(), tak);
+        emitter_utils:sendData(controller:address(), controller:port(), id(), yes);
         _ ->
-        emitter_utils:sendData(controller:address(), controller:port(), id(), nie)
+        emitter_utils:sendData(controller:address(), controller:port(), id(), no)
     end,
     timer:sleep(timer:seconds(10)),
     emit().

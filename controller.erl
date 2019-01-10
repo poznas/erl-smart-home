@@ -8,6 +8,7 @@
 
 port() -> 5000.
 address() -> {127,0,0,1}.
+id() -> controller.
 
 %%------------------------------------------------------------------------------
 %% Funkcja: start/1
@@ -26,6 +27,7 @@ start() ->
         ets:insert(signalHandlers, {smoke, fun handleSmoke/1}),
         ets:insert(signalHandlers, {intrusion, fun hanleIntrusion/1}),
 
+        process_manager:register(id(), self()),
         listen(port()),
         start
     catch
@@ -45,7 +47,7 @@ stop() ->
         ets:delete(dataSet),
         ets:delete(signalHandlers),
         io:format("Zatrzymano serwer!~n"),
-        exit(self(), normal)
+        process_manager:kill(id())
     catch
         _:_ -> io:format("Brak dzialajacego serwera na porcie ~p!~n", [port()]),
         error
