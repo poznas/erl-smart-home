@@ -1,23 +1,23 @@
 -module(alarm).
 -export([start/0, stop/0]).
 
-%%%-------------------
-%%% dom_sms symuluje zachowanie kontrolera wysyłania sms.
-%%% funkcje: start, stop, loop
-%%%-------------------
+%%%%%%%%%%%%%%%%%%%%%%
+%% alarm simulates behavior of controller that's sending SMS messages.
+%% Functions: start, stop, listen
+%%%%%%%%%%%%%%%%%%%%%%
 
 port() -> 8084.
 id() -> alarm.
 
-%%-------------------------
-%% Funckja start
-%% Rejestruje kontroler na serwerze,
-%% uruchamia kontroler danym porcie.
-%%-------------------------
+%%%%%%%%%%%%%%%%%%%%%%
+%% Function start
+%% Registers SMS controller on the server,
+%% Starts the SMS controller on the given port.
+%%%%%%%%%%%%%%%%%%%%%%
 
 start() ->
     try
-        io:format("Uruchamiam kontroler sms o id: ~p...~n", [id()]),
+        io:format("Starting SMS controller with Id: ~p...~n", [id()]),
         emitter_utils:register(controller:address(), controller:port(), id(), port()),
         Wx=wx:new(),
         Frame=wxFrame:new(Wx, -1, "Alarm Frame"),
@@ -26,29 +26,30 @@ start() ->
         process_manager:register(id(), self()),
         start
     catch
-        _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
+        _:_ -> io:format("Single process may handle only one SMS controller!~n", []),
         error
     end.
 
-%%-------------------------
-%% Funckja stop
-%% Zatrzymuje działanie kontrolera.
-%%-------------------------
+%%%%%%%%%%%%%%%%%%%%%%
+%% Function stop
+%% Stops the SMS controller.
+%%%%%%%%%%%%%%%%%%%%%%
 
 stop() ->
     try
         emitter_utils:unregister(controller:address(), controller:port(), id()),
-        io:format("Zatrzymuje kontroler sms o ID ~p...~n", [id()]),
+        io:format("SMS controller which Id is ~p is being stopped ~n", [id()]),
         wxFrame:destroy(),
         process_manager:kill(id())
     catch
-        _:_ -> io:format("Brak dzialajacego czujnika na tym procesie!~n"),
+        _:_ -> io:format("There are no SMS controllers working on this process!~n"),
         error
     end.
 
-%%-------------------------
-%% Funckja loop
-%% Dostaje informacje aby wysłać sms o podanej treści.
+%%%%%%%%%%%%%%%%%%%%%%
+%% Function listen
+%% Waits for information to send SMS with given text.
+%%%%%%%%%%%%%%%%%%%%%%
 
 listen(Frame) ->
     case consumer_utils:listen(port()) of

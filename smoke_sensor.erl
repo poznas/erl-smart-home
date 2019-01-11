@@ -1,48 +1,48 @@
 -module(smoke_sensor).
 -export([start/0, stop/0]).
 
-%%%-------------------
-%%% dom_dym symuluje zachowanie czujnika dymu.
-%%% funkcje: start, stop, loop
-%%%-------------------
+%%%%%%%%%%%%%%%%%%%%%%
+%% smoke_sensor simulates behavior of smoke sensor.
+%% Functions: start, stop, emit
+%%%%%%%%%%%%%%%%%%%%%%
 
 id() -> smoke.
 
-%%-------------------------
-%% Funckja start
-%% Rejestruje czujnik na serwerze,
-%% uruchamia czujnik dymu na danym porcie.
-%%-------------------------
+%%%%%%%%%%%%%%%%%%%%%%
+%% Function start
+%% Registers smoke sensor on the server,
+%% Starts the smoke sensor on the given port.
+%%%%%%%%%%%%%%%%%%%%%%
 start() ->
     try
-        io:format("Uruchamiam czujnik dymu o Id: ~p...~n", [id()]),
+        io:format("Starting smoke senors with Id: ~p...~n", [id()]),
         emitter_utils:register(controller:address(), controller:port(), id(), 0),
         process_manager:register(id(), self()),
         emit()
     catch
-        _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
+        _:_ -> io:format("Single process may handle only one smoke sensor!~n", []),
         error
     end.
 
-%%-------------------------
-%% Funckja stop
-%% Zatrzymuje działanie czujnika dymu.
-%%-------------------------
+%%%%%%%%%%%%%%%%%%%%%%
+%% Function stop
+%% Stops the smoke sensor.
+%%%%%%%%%%%%%%%%%%%%%%
 
 stop() ->
     try
         emitter_utils:unregister(controller:address(), controller:port(), id()),
-        io:format("Zatrzymuje kontroler dym kurwa chuj o ID ~p...~n", [id()]),
+        io:format("smoke sensor which Id is ~p is being stopped ~n", [id()]),
         process_manager:kill(id())
     catch
-        _:_ -> io:format("Brak dzialajacego czujnika na tym procesie!~n"),
+        _:_ -> io:format("There are no smoke sensors working on this process!~n"),
         error
     end.
 
-%%-------------------------
-%% Funckja loop
-%% Wysyła co 10 sekund do serwera informacje o obecności dymu.
-%%-------------------------
+%%%%%%%%%%%%%%%%%%%%%%
+%% Function emit
+%% Every 10 seconds sends to controller information whether smoke has been detected.
+%%%%%%%%%%%%%%%%%%%%%%
 
 emit() ->
     case random:uniform(2) of

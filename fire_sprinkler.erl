@@ -1,59 +1,59 @@
 -module(fire_sprinkler).
 -export([start/0, stop/0]).
 
-%%%-------------------
-%%% dom_okno symuluje zachowanie kontrolera wysyłania sms.
-%%% funkcje: start, stop, loop
-%%%-------------------
+%%%%%%%%%%%%%%%%%%%%%%
+%% fire_sprinkler simulates behavior of fire sprinkler controller.
+%% Functions: start, stop, listen
+%%%%%%%%%%%%%%%%%%%%%%
 
 port() -> 8089.
 id() -> sprinkler.
 
-%%-------------------------
-%% Funckja start
-%% Rejestruje kontroler na serwerze,
-%% uruchamia kontroler danym porcie.
-%%-------------------------
+%%%%%%%%%%%%%%%%%%%%%%
+%% Function start
+%% Registers fire sprinkler controller on the server,
+%% Starts the alarm sensor on the given port.
+%%%%%%%%%%%%%%%%%%%%%%
 
 
 start() ->
     try
-        io:format("Launching fire sprinkler: ~p...~n", [id()]),
+        io:format("Starting fire sprinkler controller with Id: ~p...~n", [id()]),
         emitter_utils:register(controller:address(), controller:port(), id(), port()),
         process_manager:register(id(), self()),
         listen(),
         start
     catch
-        _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
+        _:_ -> io:format("Single process may handle only one fire sprinkler controller!~n", []),
         error
     end.
 
-%%-------------------------
-%% Funckja stop
-%% Zatrzymuje działanie kontrolera.
-%%-------------------------
+%%%%%%%%%%%%%%%%%%%%%%
+%% Function stop
+%% Stops the fire sprinkler controller.
+%%%%%%%%%%%%%%%%%%%%%%
 
 stop() ->
     try
         emitter_utils:unregister(controller:address(), controller:port(), id()),
-        io:format("Zatrzymuje kontroler kutas o ID ~p...~n", [id()]),
+        io:format("Fire sprinkler controller which Id is ~p is being stopped~n", [id()]),
         process_manager:kill(id())
     catch
-        _:_ -> io:format("Brak dzialajacego czujnika na tym procesie!~n"),
+        _:_ -> io:format("There are no fire sprinkler controllers working on this process!~n"),
         error
     end.
 
-%%-------------------------
-%% Funckja loop
-%% Dostaje informacje z informacją, czy otworzyć okna.
-%%-------------------------
+%%%%%%%%%%%%%%%%%%%%%%
+%% Function listen
+%% Waits for information whether windows should be opened or closed.
+%%%%%%%%%%%%%%%%%%%%%%
 
 listen() ->
     case consumer_utils:listen(port()) of
         {_, _, on} ->
-            io:format("Otwieram okna ~n");
+            io:format("Windows are being opened ~n");
         {_, _, off} ->
-            io:format("Zamykam okna ~n");
+            io:format("Windows are being closed ~n");
         _ ->
             nil
     end,

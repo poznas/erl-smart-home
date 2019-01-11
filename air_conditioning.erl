@@ -1,52 +1,50 @@
 -module(air_conditioning).
 -export([start/0, stop/0]).
 
-%%%-------------------
-%%% dom_ac symuluje zachowanie kontrolera klimatyzacji
-%%% funkcje: start, stop, loop
-%%%
-%%%
-%%%-------------------
+%%%%%%%%%%%%%%%%%%%%%%
+%% air_conditioning simulates behavior of air conditioner controller.
+%% Functions: start, stop, listen
+%%%%%%%%%%%%%%%%%%%%%%
 
 port() -> 8081.
 id() -> ac.
 
 
-%%-------------------------
-%% funckja start
-%% rejestruje kontroler na serwerze,
-%% uruchamia kontroler klimatyzacji na danym porcie
-%%-------------------------
+%%%%%%%%%%%%%%%%%%%%%%
+%% Function start
+%% Registers air conditioner controller on the server,
+%% Starts the air conditioner controller on the given port.
+%%%%%%%%%%%%%%%%%%%%%%
 start() ->
     try
-        io:format("Uruchamiam kontroler klimatyzacji o id: ~p...~n", [id()]),
+        io:format("Starting air conditioner controller with Id: ~p...~n", [id()]),
         emitter_utils:register(controller:address(), controller:port(), id(), port()),
         process_manager:register(id(), self()),
         listen(),
         start
     catch
-        _:_ -> io:format("Pojedynczy proces moze obslugiwac tylko jeden czujnik!~n", []),
+        _:_ -> io:format("Single process may handle only one air conditioner controller!~n", []),
         error
     end.
 
-  %%-------------------------
-  %% funckja stop
-  %% zatrzymuje działanie kontrolera klimatyzacji
-  %%-------------------------
+  %%%%%%%%%%%%%%%%%%%%%%
+  %% Function stop
+  %% Stops the air conditioner controller.
+  %%%%%%%%%%%%%%%%%%%%%%
 stop() ->
     try
         emitter_utils:unregister(controller:address(), controller:port(), id()),
-        io:format("Zatrzymuje kontroler klimatyzacji o ID ~p...~n", [id()]),
+        io:format("Air conditioner controller which Id is ~p is being stopped ~n", [id()]),
         process_manager:kill(id())
     catch
-        _:_ -> io:format("Brak dzialajacego czujnika na tym procesie!~n"),
+        _:_ -> io:format("There are no air conditioner controllers working on this process!~n"),
         error
     end.
 
-  %%-------------------------
-  %% funckja loop
-  %% dostaje informacje czy włączyć czy wyłączyć klimatyzację
-  %%-------------------------
+  %%%%%%%%%%%%%%%%%%%%%%
+  %% Function listen
+  %% Waits for information whether air conditioner controller should be switched on or off.
+  %%%%%%%%%%%%%%%%%%%%%%
 
 listen() ->
     case consumer_utils:listen(port()) of
