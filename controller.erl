@@ -1,27 +1,27 @@
 -module(controller).
 -export([start/0, stop/0, port/0, address/0, handleTemperature/1, handleSmoke/1, hanleIntrusion/1]).
-%%%-----------------------------------------------------------------------------
-%%% Glowny serwer aplikacji.
-%%% Zajmuje sie wymiana danych pomiedzy klientami oraz wykonywaniem odpowiednich
-%%% funkcji w zaleznosci od otrzymanych danych.
-%%%-----------------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Main server of the application.
+%% Exchanges data between clients and 
+%% calls functions based on data received
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 port() -> 5000.
 address() -> {127,0,0,1}.
 id() -> controller.
 
-%%------------------------------------------------------------------------------
-%% Funkcja: start/1
-%% Cel: Uruchamia serwer na podanym porcie oraz tworzy wszelkie potrzebne magazyny
-%%     danych. Jesli podany port jest juz zajety to zwracany jest natychmiast blad.
-%% Argumenty: Port - numer portu.
-%%------------------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Function: start
+%% Purpose: Launches server on a given port and creates all necessary data containers. 
+%% If given port is already taken error is returned.
+%% Arguments: Port.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 start() ->
     try
         ets:new(clientSet, [set, named_table, public]),
         ets:new(dataSet, [set, named_table, public]),
         ets:new(signalHandlers, [bag, named_table, public]),
-        io:format("Uruchamiam serwer na porcie ~p...~n", [port()]),
+        io:format("Starting server on port ~p...~n", [port()]),
 
         ets:insert(signalHandlers, {temp, fun handleTemperature/1}),
         ets:insert(signalHandlers, {smoke, fun handleSmoke/1}),
@@ -35,30 +35,30 @@ start() ->
         error
     end.
 
-%%------------------------------------------------------------------------------
-%% Funkcja: start/1
-%% Cel: Zatrzymuje serwer dzialajacy na podanym porcie oraz usuwa wszelkie magazyny
-%%     danych. Jesli nie istnieje serwer na podanym porcie to zwracany jest natychmiast blad.
-%% Argumenty: Port - numer portu.
-%%------------------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Function: stop
+%% Purpose: Deletes server on a given port and deletes all existing data containers. 
+%% If given port is already free error is returned.
+%% Arguments: Port.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 stop() ->
     try
         ets:delete(clientSet),
         ets:delete(dataSet),
         ets:delete(signalHandlers),
-        io:format("Zatrzymano serwer!~n"),
+        io:format("Server stopped!~n"),
         process_manager:kill(id())
     catch
-        _:_ -> io:format("Brak dzialajacego serwera na porcie ~p!~n", [port()]),
+        _:_ -> io:format("No working server on port ~p!~n", [port()]),
         error
     end.
 
-%%------------------------------------------------------------------------------
-%% Funkcja: read/1
-%% Cel: Odczytuje dane przychodzace do serwera a nastepnie reaguje asynchronicznie
-%%     w zaleznosci od otrzymanych danych.
-%% Argumenty: Port - numer portu.
-%%------------------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Function: listen
+%% Purpose: Reads data coming from the server and then reacts asynchronously 
+%% based on data received.
+%% Arguments: Port.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 listen(Port) ->
     case consumer_utils:listen(Port) of
         {error, _} ->
@@ -70,45 +70,45 @@ listen(Port) ->
             stop()
     end.
 
-%%------------------------------------------------------------------------------
-%% Funkcja: act/3
-%% Cel: Reaguje na otrzymane dane w zaleznosci od ich formatu.
-%% Argumenty: Adres klienta, krotka z danymi.
-%%------------------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Function: act
+%% Purpose: Reacts on received data based on their format.
+%% Arguments: Client's address, tuple with data.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 act(ClientAddress, {register, Id, ClientPort}) ->
     io:format("register o id ~p.~n", [Id]),
     ets:insert(clientSet, {Id, ClientAddress, ClientPort}),
-    io:format("Rejestruje klienta o id ~p~n", [Id]);
+    io:format("Registering client with id ~p~n", [Id]);
 act(_, {data, Id, Data}) ->
     ets:insert(dataSet, {Id, Data}),
-    io:format("Otrzymalem dane od ID ~p: ~p~n", [Id, Data]),
+    io:format("Received data from ID ~p: ~p~n", [Id, Data]),
     handleSignal(Id);
 act(_, {delete, Id}) ->
     try
         ets:delete(clientSet, Id),
-        io:format("Usuwam klienta o id ~p.~n", [Id])
+        io:format("Deleting client with id ~p.~n", [Id])
     catch
-        error:badarg -> io:format("Brak dzialajacego klienta o id ~p!~n", [Id])
+        error:badarg -> io:format("No working client with id ~p!~n", [Id])
     end.
 
 
-%%------------------------------------------------------------------------------
-%% Funkcja: retrieveData/1
-%% Cel: Zwraca dane, ktore przyszly od clienta z podanym ID.
-%% Argumenty: ID klienta.
-%% Zwraca: Zapisane dane lub nil, jesli nie odebrano danych od klienta o podanym ID.
-%%------------------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Function: retrieveData
+%% Purpose: Returns date, which came from client of given ID.
+%% Arguments: client's ID.
+%% Returns: Saved data or nil, of no data has been received from client of given ID.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 retrieveData(Id) ->
     case ets:lookup(dataSet, Id) of
         [] -> nil;
         [{Id, Data}] -> Data
     end.
 
-%%------------------------------------------------------------------------------
-%% Funkcja: forwardSignal/2
-%% Cel: Wysyla podane dane do klienta o podanym ID.
-%% Argumenty: ID klienta, dane do wyslania.
-%%------------------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Function: forwardSignal
+%% Purpose: Sends data to client of given ID.
+%% Arguments: client's ID, data to send.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 forwardSignal(Id, Data) ->
     case ets:lookup(clientSet, Id) of
         [] -> nil;
@@ -116,12 +116,11 @@ forwardSignal(Id, Data) ->
             emitter_utils:send(ClientAddress, ClientPort, Data)
     end.
 
-%%------------------------------------------------------------------------------
-%% Funkcja: exec_func/1
-%% Cel: Wywoluje wszystkie funkcje reagujace na otrzymanie danych od klienta
-%%     o podanym ID.
-%% Argumenty: ID klienta
-%%------------------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Function: exec_func
+%% Purpose: Calls all functions that react on receiving data from client of given ID.
+%% Arguments: client's ID
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 handleSignal(Id) ->
     case ets:lookup(signalHandlers, Id) of
         [] -> nil;
@@ -130,11 +129,11 @@ handleSignal(Id) ->
     end.
 
 
-%%------------------------------------------------------------------------------
-%% Funkcja: temp/1
-%% Cel: Reaguje na podana wartosc temperatury wlaczajac klimatyzacje w razie potrzeby.
-%% Argumenty: Wartosc temperatury.
-%%------------------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Function: temp
+%% Purpose: Turns ac on or off based on temperature received.
+%% Arguments: Temperature value.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 handleTemperature(nil) -> nil;
 handleTemperature(Data) when Data > 28 ->
     io:format("Temperature is ~p, Air Conditioning ON~n", [Data]),
@@ -144,26 +143,27 @@ handleTemperature(_)  ->
     forwardSignal(ac, off).
 
 
-%%------------------------------------------------------------------------------
-%% Funkcja: alarm/1
-%% Cel: Reaguje na stan alarmu, wysylajac SMS jesli zostal on aktywowany.
-%% Argumenty: Stan alarmu.
-%%------------------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Function: alarm
+%% Purpose: Reacts on smoke sensor state. 
+%% If alarm was activated SMS is being send.
+%% Arguments: Alarm state.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 hanleIntrusion(yes) ->
-    io:format("Ktos wlamuje sie do domu, alarm!~n"),
-    forwardSignal(alarm, "Ktos wlamuje sie do domu, alarm!");
+    io:format("Someone is breaking into the house, alarm!~n"),
+    forwardSignal(alarm, "Someone is breaking into the house, alarm!");
 hanleIntrusion(_) -> nil.
 
-%%------------------------------------------------------------------------------
-%% Funkcja: alarm/1
-%% Cel: Reaguje na stan czujnika dymu, wysylajac SMS jesli zostal on aktywowany
-%%     oraz otwierajac okna.
-%% Argumenty: Stan czujnika dymu.
-%%------------------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Function: alarm/1
+%% Purpose: Reacts on smoke sensor state. 
+%% If sensor was activated SMS is being send and windows are being opened. 
+%% Arguments: Smoke sensor state.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 handleSmoke(yes) ->
-    io:format("Czujnik wykryl dym!~n"),
-    forwardSignal(alarm, "Czujnik wykryl dym!"),
-    io:format("Otwieram okna...~n"),
+    io:format("The sensor has detected smoke!~n"),
+    forwardSignal(alarm, "The sensor has detected smoke!"),
+    io:format("Opening the windows...~n"),
     forwardSignal(sprinkler, on);
 handleSmoke(_) ->
     forwardSignal(sprinkler, off).

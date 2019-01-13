@@ -10,7 +10,7 @@ port() -> 8089.
 id() -> sprinkler.
 
 %%%%%%%%%%%%%%%%%%%%%%
-%% Function start
+%% Function: start
 %% Registers fire sprinkler controller on the server,
 %% Starts the alarm sensor on the given port.
 %%%%%%%%%%%%%%%%%%%%%%
@@ -29,7 +29,7 @@ start() ->
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%
-%% Function stop
+%% Function: stop
 %% Stops the fire sprinkler controller.
 %%%%%%%%%%%%%%%%%%%%%%
 
@@ -44,7 +44,7 @@ stop() ->
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%
-%% Function listen
+%% Function: listen
 %% Waits for information whether windows should be opened or closed.
 %%%%%%%%%%%%%%%%%%%%%%
 

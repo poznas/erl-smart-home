@@ -9,7 +9,7 @@
 id() -> smoke.
 
 %%%%%%%%%%%%%%%%%%%%%%
-%% Function start
+%% Function: start
 %% Registers smoke sensor on the server,
 %% Starts the smoke sensor on the given port.
 %%%%%%%%%%%%%%%%%%%%%%
@@ -25,7 +25,7 @@ start() ->
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%
-%% Function stop
+%% Function: stop
 %% Stops the smoke sensor.
 %%%%%%%%%%%%%%%%%%%%%%
 
@@ -40,7 +40,7 @@ stop() ->
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%
-%% Function emit
+%% Function: emit
 %% Every 10 seconds sends to controller information whether smoke has been detected.
 %%%%%%%%%%%%%%%%%%%%%%
 

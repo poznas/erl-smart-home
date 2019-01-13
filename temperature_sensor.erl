@@ -9,7 +9,7 @@
 id() -> temp.
 
 %%%%%%%%%%%%%%%%%%%%%%
-%% Function start
+%% Function: start
 %% Registers temperature sensor on the server,
 %% Starts the temperature sensor on the given port.
 %%%%%%%%%%%%%%%%%%%%%%
@@ -25,7 +25,7 @@ start() ->
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%
-%% Function stop
+%% Function: stop
 %% Stops the temperature sensor.
 %%%%%%%%%%%%%%%%%%%%%%
 stop() ->
@@ -39,7 +39,7 @@ stop() ->
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%
-%% Function emit
+%% Function: emit
 %% Every 5 seconds sends temperature value to the controller.
 %%%%%%%%%%%%%%%%%%%%%%
 

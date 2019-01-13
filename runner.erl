@@ -1,9 +1,16 @@
 -module(runner).
 -export([start/0, stop/0]).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Runner
+%% Runs the whole application.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 launchTimeInterval() -> 2.
 stopTimeInterval() -> 1.
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Function: start
+%% Purpose: Creates all necessary processes and launches application. 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 start() -> 
 
     % Process Manager
@@ -45,7 +52,10 @@ start() ->
     SmokePID = spawn(fun () -> smoke_sensor:start() end),
     io:format("Run [Smoke Sensor] process: ~p~n", [SmokePID]).
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Function: stop
+%% Purpose: Stops the application.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 stop() ->
 
     % Signal emitters

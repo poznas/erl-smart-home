@@ -9,7 +9,7 @@
 id() -> intrusion.
 
 %%%%%%%%%%%%%%%%%%%%%%
-%% Function start
+%% Function: start
 %% Registers alarm sensor on the server,
 %% Starts the alarm sensor on the given port.
 %%%%%%%%%%%%%%%%%%%%%%
@@ -26,7 +26,7 @@ start() ->
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%
-%% Function stop
+%% Function: stop
 %% Stops the alarm sensor.
 %%%%%%%%%%%%%%%%%%%%%%
 
@@ -41,8 +41,8 @@ stop() ->
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%
-%% Function emit
-%% Every 10 seconds sends to controller information whether intrusion has occured.
+%% Function: emit
+%% Every 10 seconds sends to controller information whether intrusion has occurred.
 %%%%%%%%%%%%%%%%%%%%%%
 
 emit() ->

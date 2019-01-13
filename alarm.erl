@@ -10,7 +10,7 @@ port() -> 8084.
 id() -> alarm.
 
 %%%%%%%%%%%%%%%%%%%%%%
-%% Function start
+%% Function: start
 %% Registers SMS controller on the server,
 %% Starts the SMS controller on the given port.
 %%%%%%%%%%%%%%%%%%%%%%
@@ -31,7 +31,7 @@ start() ->
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%
-%% Function stop
+%% Function: stop
 %% Stops the SMS controller.
 %%%%%%%%%%%%%%%%%%%%%%
 
@@ -47,7 +47,7 @@ stop() ->
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%
-%% Function listen
+%% Function: listen
 %% Waits for information to send SMS with given text.
 %%%%%%%%%%%%%%%%%%%%%%
 

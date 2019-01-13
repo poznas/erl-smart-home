@@ -1,31 +1,31 @@
 -module(emitter_utils).
 -compile(export_all).
-%%%-----------------------------------------------------------------------------
-%%% Funkcje pomocnicze realizujace podstawowe interakcje klienta z serwerem
-%%%-----------------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Helpful functions that implement basic interactions between client and the server.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%------------------------------------------------------------------------------
-%% Funkcja: register/5
-%% Cel: Rejestruje klienta na serwerze o podanym adresie i porcie. Klient jest
-%%     rejestrowany z podanym ID, nazwa i portem odbiorczym.
-%% Argumenty: Adres i port serwera, ID, nazwa i port odbiorczy klienta.
-%%------------------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Function: register
+%% Purpose: Registers client on server of given address and port. Client is being registered
+%% with given ID, name and receiving port.
+%% Arguments: Server's address and port, client's ID, name and receiving port.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 register(ServerAddress, ServerPort, Id, ClientPort) -> 
     send(ServerAddress, ServerPort, Id, {register, Id, ClientPort}).
 
-%%------------------------------------------------------------------------------
-%% Funkcja: data/4
-%% Cel: Wysyla dane na podany adres i port serwera od klienta o podanym ID.
-%% Argumenty: Adres i port serwera, ID i dane klienta.
-%%------------------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Function: data
+%% Purpose: Sends data on server's given address and port from client of given ID.
+%% Arguments: Server's address and port, client's ID and data.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 sendData(ServerAddress, ServerPort, Id, Data) -> 
     send(ServerAddress, ServerPort, Id, {data, Id, Data}).
 
-%%------------------------------------------------------------------------------
-%% Funkcja: delete/3
-%% Cel: Usuwa na serwerze o podanym adresie i porcie klienta o podanym ID.
-%% Argumenty: Adres i port serwera, ID klienta.
-%%------------------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Function: delete
+%% Purpose: Deletes client of a given ID from the server of a given address and port.
+%% Arguments: Server's address and port, client's ID.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 unregister(ServerAddress, ServerPort, Id) -> 
     send(ServerAddress, ServerPort, Id, {delete, Id}).
 
@@ -34,11 +34,11 @@ send(ServerAddress, ServerPort, OperationId, Payload) ->
     io:format("~p : -> ~p:~p [~p]~n", [OperationId, ServerAddress, ServerPort, Payload]),
     gen_udp:send(Socket, ServerAddress, ServerPort, term_to_binary(Payload)).
 
-%%------------------------------------------------------------------------------
-%% Funkcja: send/3
-%% Cel: Wysyla dane przez protokol UDP na podany adress i port.
-%% Argumenty: Adres docelowy jako krotka, port oraz dane do wyslania.
-%%------------------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Function: send
+%% Purpose: Sends data using UDP protocol on given address and port.
+%% Arguments: Address, port and data to send.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 send(Address, Port, Data) ->
     {ok, Socket} = gen_udp:open(0, [binary, {active, false}]),
     gen_udp:send(Socket, Address, Port, term_to_binary(Data)).
