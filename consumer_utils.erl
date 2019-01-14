@@ -25,7 +25,7 @@ listen(Port, Timeout) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Function: read
-%% Purpose: Reads data send using UDP protocol on a given port for 1000 milliseconds.
+%% Purpose: Reads data send using UDP protocol on a given port for 100000 milliseconds.
 %% Arguments: Port.
 %% Returns: Tuple {SenderAddress, SenderPort, Data} or {}
 %%     if error has occurred or no data has been read.

@@ -45,15 +45,15 @@ stop() ->
 
 %%%%%%%%%%%%%%%%%%%%%%
 %% Function: listen
-%% Waits for information whether windows should be opened or closed.
+%% Waits for information whether fire sprinkler should be turned on or off.
 %%%%%%%%%%%%%%%%%%%%%%
 
 listen() ->
     case consumer_utils:listen(port()) of
         {_, _, on} ->
-            io:format("Windows are being opened ~n");
+            io:format("Fire sprinkler is being turned on ~n");
         {_, _, off} ->
-            io:format("Windows are being closed ~n");
+            io:format("Fire sprinkler is being turned off ~n");
         _ ->
             nil
     end,

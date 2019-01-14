@@ -2,7 +2,7 @@
 -export([start/0, stop/0]).
 
 %%%%%%%%%%%%%%%%%%%%%%
-%% alarm simulates behavior of controller that's sending SMS messages.
+%% alarm simulates behavior of house's alarm.
 %% Functions: start, stop, listen
 %%%%%%%%%%%%%%%%%%%%%%
 
@@ -11,13 +11,12 @@ id() -> alarm.
 
 %%%%%%%%%%%%%%%%%%%%%%
 %% Function: start
-%% Registers SMS controller on the server,
-%% Starts the SMS controller on the given port.
+%% Registers alarm on the server and sends data to show in the dialog box.
 %%%%%%%%%%%%%%%%%%%%%%
 
 start() ->
     try
-        io:format("Starting SMS controller with Id: ~p...~n", [id()]),
+        io:format("Starting alarm with Id: ~p...~n", [id()]),
         emitter_utils:register(controller:address(), controller:port(), id(), port()),
         Wx=wx:new(),
         Frame=wxFrame:new(Wx, -1, "Alarm Frame"),
@@ -26,29 +25,29 @@ start() ->
         process_manager:register(id(), self()),
         start
     catch
-        _:_ -> io:format("Single process may handle only one SMS controller!~n", []),
+        _:_ -> io:format("Single process may handle only one alarm!~n", []),
         error
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%
 %% Function: stop
-%% Stops the SMS controller.
+%% Stops the alarm.
 %%%%%%%%%%%%%%%%%%%%%%
 
 stop() ->
     try
         emitter_utils:unregister(controller:address(), controller:port(), id()),
-        io:format("SMS controller which Id is ~p is being stopped ~n", [id()]),
+        io:format("Alarm which Id is ~p is being turned off ~n", [id()]),
         wxFrame:destroy(),
         process_manager:kill(id())
     catch
-        _:_ -> io:format("There are no SMS controllers working on this process!~n"),
+        _:_ -> io:format("There are no alarms on this process!~n"),
         error
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%
 %% Function: listen
-%% Waits for information to send SMS with given text.
+%% Waits for information to show in dialog box.
 %%%%%%%%%%%%%%%%%%%%%%
 
 listen(Frame) ->

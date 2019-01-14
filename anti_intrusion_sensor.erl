@@ -2,7 +2,7 @@
 -export([start/0, stop/0]).
 
 %%%%%%%%%%%%%%%%%%%%%%
-%% anti_intrusion_sensor simulates behavior of alarm sensor.
+%% anti_intrusion_sensor simulates behavior of anti intrusion sensor.
 %% Functions: start, stop, emit
 %%%%%%%%%%%%%%%%%%%%%%
 
@@ -10,33 +10,33 @@ id() -> intrusion.
 
 %%%%%%%%%%%%%%%%%%%%%%
 %% Function: start
-%% Registers alarm sensor on the server,
-%% Starts the alarm sensor on the given port.
+%% Registers anti intrusion sensor on the server,
+%% Starts the anti intrusion sensor on the given port.
 %%%%%%%%%%%%%%%%%%%%%%
 
 start() ->
     try
-        io:format("Starting alarm sensor with Id: ~p...~n", [id()]),
+        io:format("Starting anti intrusion sensor with Id: ~p...~n", [id()]),
         emitter_utils:register(controller:address(), controller:port(), id(), 0),
         process_manager:register(id(), self()),
         emit()
     catch
-        _:_ -> io:format("Single process may handle only one alarm sensor!~n", []),
+        _:_ -> io:format("Single process may handle only one anti intrusion sensor!~n", []),
         error
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%
 %% Function: stop
-%% Stops the alarm sensor.
+%% Stops the anti intrusion sensor sensor.
 %%%%%%%%%%%%%%%%%%%%%%
 
 stop() ->
     try
         emitter_utils:unregister(controller:address(), controller:port(), id()),
-        io:format("Alarm sensor which Id is ~p is being stopped~n", [id()]),
+        io:format("Anti intrusion sensor which Id is ~p is being stopped~n", [id()]),
         process_manager:kill(id())
     catch
-        _:_ -> io:format("There are no alarm sensors working on this process!~n"),
+        _:_ -> io:format("There are no anti intrusion sensors working on this process!~n"),
         error
     end.
 

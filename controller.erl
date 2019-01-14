@@ -94,7 +94,7 @@ act(_, {delete, Id}) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Function: retrieveData
-%% Purpose: Returns date, which came from client of given ID.
+%% Purpose: Returns data, which came from client of given ID.
 %% Arguments: client's ID.
 %% Returns: Saved data or nil, of no data has been received from client of given ID.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
