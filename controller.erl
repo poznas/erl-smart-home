@@ -145,8 +145,8 @@ handleTemperature(_)  ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Function: alarm
-%% Purpose: Reacts on smoke sensor state. 
-%% If alarm was activated SMS is being send.
+%% Purpose: Reacts on anti intrusion sensor. 
+%% If intrusion got detected alarm is being activated.
 %% Arguments: Alarm state.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 hanleIntrusion(yes) ->
@@ -157,13 +157,13 @@ hanleIntrusion(_) -> nil.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Function: alarm/1
 %% Purpose: Reacts on smoke sensor state. 
-%% If sensor was activated SMS is being send and windows are being opened. 
+%% If sensor was activated fire sprinkler is being turned on. 
 %% Arguments: Smoke sensor state.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 handleSmoke(yes) ->
     io:format("The sensor has detected smoke!~n"),
     forwardSignal(alarm, "The sensor has detected smoke!"),
-    io:format("Opening the windows...~n"),
+    io:format("Fire sprinkler is being turned on...~n"),
     forwardSignal(sprinkler, on);
 handleSmoke(_) ->
     forwardSignal(sprinkler, off).

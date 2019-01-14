@@ -49,9 +49,9 @@ stop() ->
 listen() ->
     case consumer_utils:listen(port()) of
         {_, _, on} ->
-            io:format("Wlaczam klimatyzacje ~n");
+            io:format("Turning air conditioning on ~n");
         {_, _, off} ->
-            io:format("Wylaczam klimatyzacje ~n");
+            io:format("Turning air conditioning off ~n");
         _ ->
             nil
     end,
