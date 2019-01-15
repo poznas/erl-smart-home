@@ -10,7 +10,9 @@
 %% Function: init
 %% Purpose: Initiates data container that stores PIDs.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-init() -> ets:new(pids, [set, named_table, public]).
+init() -> 
+    io:format("init process manager: ~p~n", [self()]),
+    ets:new(pids, [set, named_table, public]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Function: register
@@ -26,6 +28,7 @@ register(Key, PID) -> ets:insert(pids, {Key, PID}).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 kill(Key) -> 
     PID = element(2, hd(ets:lookup(pids, Key))),
+    io:format("Process Manager: ~p is about to kill -> ~p (~p)~n", [self(), PID]),
     exit(PID, stop).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Function: destroy

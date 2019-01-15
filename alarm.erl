@@ -21,8 +21,8 @@ start() ->
         Wx=wx:new(),
         Frame=wxFrame:new(Wx, -1, "Alarm Frame"),
         %wxFrame:show(Frame),
-        listen(Frame),
         process_manager:register(id(), self()),
+        listen(Frame),
         start
     catch
         _:_ -> io:format("Single process may handle only one alarm!~n", []),
@@ -38,10 +38,9 @@ stop() ->
     try
         emitter_utils:unregister(controller:address(), controller:port(), id()),
         io:format("Alarm which Id is ~p is being turned off ~n", [id()]),
-        wxFrame:destroy(),
         process_manager:kill(id())
     catch
-        _:_ -> io:format("There are no alarms on this process!~n"),
+        error:Reason -> io:format("Error while terminating ~p, alarm: ~p!~n", [self(), Reason]),
         error
     end.
 

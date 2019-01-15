@@ -1,5 +1,5 @@
 -module(runner).
--export([start/0, stop/0]).
+-export([start/0, stop/0, gui/0]).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Runner
 %% Runs the whole application.
@@ -88,3 +88,31 @@ stop() ->
 
     process_manager:destroy().
 
+
+gui() -> 
+    P_PID = self(),
+    Wx=wx:new(),
+    Frame=wxFrame:new(Wx, -1, "iHome GUI"),
+    Panel = wxPanel:new(Frame),
+    StartButton = wxButton:new(Panel, 12, [{label,"START"}]),
+    wxButton:connect(StartButton, command_button_clicked, [{callback, 
+        fun(_, _) -> P_PID ! start end }]),
+    StopButton = wxButton:new(Panel, 12, [{label,"STOP"}, {pos, {50, 50}}]),
+    wxButton:connect(StopButton, command_button_clicked, [{callback, 
+        fun(_, _) -> P_PID ! stop end }]),
+    wxFrame:show(Frame),
+
+    awaitStart().
+
+
+awaitStart() -> 
+    receive 
+        start -> start()
+    end,
+    awaitStop().
+
+awaitStop() ->
+    receive
+        stop -> stop()
+    end,
+    awaitStart().
