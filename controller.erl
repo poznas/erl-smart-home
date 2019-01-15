@@ -28,7 +28,7 @@ start() ->
         ets:insert(signalHandlers, {intrusion, fun hanleIntrusion/1}),
 
         process_manager:register(id(), self()),
-        listen(port()),
+        listen(),
         start
     catch
         A:B -> io:format("Error while running controller process: ~p, ~p~n", [A, B]),
@@ -59,13 +59,13 @@ stop() ->
 %% based on data received.
 %% Arguments: Port.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-listen(Port) ->
-    case consumer_utils:listen(Port) of
+listen() ->
+    case consumer_utils:listen(port()) of
         {error, _} ->
             stop();
         {ClientAddress, _, Data} ->
             spawn(fun () -> act(ClientAddress, Data) end),
-            listen(Port);
+            listen();
         _ ->
             stop()
     end.
@@ -136,10 +136,10 @@ handleSignal(Id) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 handleTemperature(nil) -> nil;
 handleTemperature(Data) when Data > 28 ->
-    io:format("Temperature is ~p, Air Conditioning ON~n", [Data]),
+    log("Air Conditioning ON, temperature : " ++ integer_to_list(Data)),
     forwardSignal(ac, on);
 handleTemperature(_)  ->
-    io:format("Temperature is fine, Air Conditioning OFF~n"),
+    log("Temperature is fine, Air Conditioning OFF"),
     forwardSignal(ac, off).
 
 
@@ -150,7 +150,7 @@ handleTemperature(_)  ->
 %% Arguments: Alarm state.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 hanleIntrusion(yes) ->
-    io:format("Someone is breaking into the house, alarm!~n"),
+    log("Someone is breaking into the house, alarm!"),
     forwardSignal(alarm, "Someone is breaking into the house, alarm!");
 hanleIntrusion(_) -> nil.
 
@@ -161,9 +161,16 @@ hanleIntrusion(_) -> nil.
 %% Arguments: Smoke sensor state.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 handleSmoke(yes) ->
-    io:format("The sensor has detected smoke!~n"),
+    log("The sensor has detected smoke!"),
     forwardSignal(alarm, "The sensor has detected smoke!"),
-    io:format("Fire sprinkler is being turned on...~n"),
+    log("Fire sprinkler is being turned on..."),
     forwardSignal(sprinkler, on);
 handleSmoke(_) ->
     forwardSignal(sprinkler, off).
+
+
+log(Line) -> 
+    io:format("~s~n", [Line]),
+    {ok, Log} = file:open("log.txt", [append]),
+    io:format(Log, "[~p] ~s~n", [erlang:localtime(), Line]),
+    file:close(Log).

@@ -28,7 +28,7 @@ register(Key, PID) -> ets:insert(pids, {Key, PID}).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 kill(Key) -> 
     PID = element(2, hd(ets:lookup(pids, Key))),
-    io:format("Process Manager: ~p is about to kill -> ~p (~p)~n", [self(), PID]),
+    io:format("Process Manager: ~p is about to kill -> ~p (~p)~n", [self(), PID, Key]),
     exit(PID, stop).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Function: destroy
